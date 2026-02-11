@@ -5,91 +5,42 @@
 <title>💜데일리 타이핑💜</title>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang&display=swap" rel="stylesheet">
 <style>
+/* CSS는 이전과 동일하지만, 클릭 유도를 위해 body에 cursor: pointer를 추가했어요 */
 body {
-  margin: 0;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #fdebeb;
-  font-family: 'Gowun Batang', serif;
-  position: relative;
-  overflow: hidden;
+  margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center;
+  background: #fdebeb; font-family: 'Gowun Batang', serif; position: relative; overflow: hidden;
+  cursor: pointer; 
 }
-
-#particleCanvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.best-record {
-  position: absolute;
-  top: 35px;
-  right: 45px;
-  text-align: right;
-  color: #ae97c1;
-  font-size: 15px;
-  letter-spacing: 1px;
-}
-
-.best-record span {
-  font-size: 26px;
-  display: block;
-  color: #e180c4;
-  margin-top: 5px;
-  transition: transform 0.2s ease;
-}
-
-.container {
-  text-align: center;
-  width: 700px;
-  position: relative;
-  z-index: 20;
-}
-
+#particleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+.best-record { position: absolute; top: 35px; right: 45px; text-align: right; color: #ae97c1; font-size: 15px; letter-spacing: 1px; }
+.best-record span { font-size: 26px; display: block; color: #e180c4; margin-top: 5px; transition: transform 0.2s ease; }
+.container { text-align: center; width: 700px; position: relative; z-index: 20; }
 .categories { margin-bottom: 14px; }
 .categories button {
   margin: 0 6px; padding: 6px 14px; border-radius: 20px; border: none;
-  cursor: pointer; background: #ecbecd; color: #923e59;
-  font-family: 'Gowun Batang', serif; transition: 0.3s;
+  cursor: pointer; background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif; transition: 0.3s;
 }
 .categories button.active { background: #ae97c1; color: white; }
-
 .title { font-size: 22px; color: #ae97c1; margin-bottom: 22px; letter-spacing: 2px; }
-.sentence {
-  font-size: 26px; margin-bottom: 26px; color: #e180c4;
-  transition: opacity 0.4s ease; white-space: nowrap; min-height: 40px;
-}
+.sentence { font-size: 26px; margin-bottom: 26px; color: #e180c4; transition: opacity 0.4s ease; white-space: nowrap; min-height: 40px; }
 .fade-out { opacity: 0; }
 .correct { color: #869bc9; }
 .incorrect { color: #ea7594; }
-
 input {
   width: 520px; padding: 14px 18px; font-size: 25px; border-radius: 16px;
-  border: none; outline: none; text-align: center;
-  background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
+  border: none; outline: none; text-align: center; background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
 }
-
 .navigation-hints { margin-top: 25px; }
 .nav-buttons { margin-bottom: 10px; }
 .nav-buttons button {
-  margin: 0 5px; padding: 8px 16px; border-radius: 12px;
-  border: 1px solid #ae97c1; background: transparent; color: #ae97c1;
-  cursor: pointer; font-family: 'Gowun Batang', serif; transition: 0.3s;
+  margin: 0 5px; padding: 8px 16px; border-radius: 12px; border: 1px solid #ae97c1;
+  background: transparent; color: #ae97c1; cursor: pointer; font-family: 'Gowun Batang', serif; transition: 0.3s;
 }
-
 .stats-container { display: flex; justify-content: center; align-items: baseline; gap: 40px; margin-top: 25px; }
 .stat-item { font-size: 19px; color: #e180c4; }
 .stat-value { font-size: 22px; display: inline-block; min-width: 45px; text-align: left; margin-left: 5px; }
-
 .sparkle { filter: drop-shadow(0 0 6px rgba(255,255,255,0.9)); animation: pulse 0.5s infinite alternate; display: inline-block; }
 @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
-
 .shortcut-guide { font-size: 14px; color: #c36081; margin: 0; opacity: 0.8; }
 .shortcut-guide span { background: #ecbecd; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 </style>
@@ -98,7 +49,6 @@ input {
 <body>
 
 <canvas id="particleCanvas"></canvas>
-
 <div class="best-record">나의 최고 타수<span id="bestScore">0</span></div>
 
 <div class="container">
@@ -109,7 +59,7 @@ input {
   </div>
   <div class="title">오늘의 문장</div>
   <div id="sentence" class="sentence"></div>
-  <input id="input" placeholder="여기에 그대로 쳐보세요💗" autocomplete="off">
+  <input id="input" placeholder="먼저 화면을 한 번 클릭하고 쳐보세요!💗" autocomplete="off">
   <div class="navigation-hints">
     <div class="nav-buttons">
       <button id="prevBtn">이전 문장</button>
@@ -125,90 +75,76 @@ input {
 
 <script src="data.js"></script> 
 <script>
-let currentType = "anime";
-let currentSentence = "";
-let startTime = null;
-let history = []; 
-let historyIndex = -1;
-let personalBest = localStorage.getItem("dailyTypingBest") || 0;
+// --- [1] 오디오 설정 ---
+// 타자기 소리 라이브러리 (무료 소스)
+const typeSoundUrl = "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3";
+const typingSound = new Audio(typeSoundUrl);
+typingSound.volume = 0.5; // 소리 크기 조절 (0.0 ~ 1.0)
 
+// 브라우저 정책 해결을 위한 함수
+function unlockAudio() {
+  typingSound.play().then(() => {
+    typingSound.pause();
+    typingSound.currentTime = 0;
+  });
+  document.removeEventListener('click', unlockAudio);
+  document.getElementById("input").placeholder = "여기에 그대로 쳐보세요💗";
+}
+document.addEventListener('click', unlockAudio);
+
+// --- [2] 입자 애니메이션 로직 ---
 const canvas = document.getElementById("particleCanvas");
 const ctx = canvas.getContext("2d");
 let particles = [];
-
 const colors = ["#ffb3ba", "#ffdfba", "#ffffba", "#baffc9", "#bae1ff", "#e0baff"];
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 class Particle {
   constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.size = Math.random() * 8 + 2;
-    this.speedX = Math.random() * 6 - 3;
-    this.speedY = Math.random() * 6 - 3;
+    this.x = x; this.y = y;
+    this.size = Math.random() * 6 + 1;
+    this.speedX = Math.random() * 4 - 2;
+    this.speedY = Math.random() * 4 - 2;
     this.color = colors[Math.floor(Math.random() * colors.length)];
     this.opacity = 1;
   }
-  update() {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    this.opacity -= 0.02;
-    if (this.size > 0.2) this.size -= 0.1;
-  }
-  draw() {
-    ctx.globalAlpha = this.opacity;
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  update() { this.x += this.speedX; this.y += this.speedY; this.opacity -= 0.03; if (this.size > 0.1) this.size -= 0.05; }
+  draw() { ctx.globalAlpha = this.opacity; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
 }
 
 function createParticles() {
   const inputRect = document.getElementById("input").getBoundingClientRect();
   const x = inputRect.left + Math.random() * inputRect.width;
   const y = inputRect.top + Math.random() * inputRect.height;
-  for (let i = 0; i < 5; i++) {
-    particles.push(new Particle(x, y));
-  }
+  for (let i = 0; i < 6; i++) { particles.push(new Particle(x, y)); }
 }
 
 function animateParticles() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (let i = 0; i < particles.length; i++) {
-    particles[i].update();
-    particles[i].draw();
-    if (particles[i].opacity <= 0) {
-      particles.splice(i, 1);
-      i--;
-    }
+    particles[i].update(); particles[i].draw();
+    if (particles[i].opacity <= 0) { particles.splice(i, 1); i--; }
   }
   requestAnimationFrame(animateParticles);
 }
 animateParticles();
 
-const sentenceEl = document.getElementById("sentence");
-const input = document.getElementById("input");
-const speedEl = document.getElementById("speed");
-const accuracyEl = document.getElementById("accuracy");
-const bestScoreEl = document.getElementById("bestScore");
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
+// --- [3] 메인 타이핑 로직 ---
+let currentType = "anime", currentSentence = "", startTime = null, history = [], historyIndex = -1;
+let personalBest = localStorage.getItem("dailyTypingBest") || 0;
+
+const sentenceEl = document.getElementById("sentence"), input = document.getElementById("input");
+const speedEl = document.getElementById("speed"), accuracyEl = document.getElementById("accuracy"), bestScoreEl = document.getElementById("bestScore");
+const prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElementById("nextBtn");
 
 bestScoreEl.textContent = personalBest;
 
 function getSpeedColor(speed) {
-  if (speed < 100) return "#869bc9"; if (speed < 200) return "#8fbc93";
-  if (speed < 300) return "#ffb347"; if (speed < 400) return "#ff6f6f";
-  if (speed < 500) return "#ae97c1"; if (speed < 600) return "#e180c4";
-  if (speed < 700) return "#f4a6c1"; if (speed < 800) return "#b39ddb";
-  if (speed < 900) return "#6fa8dc"; if (speed < 1000) return "#bcdffb";
+  if (speed < 100) return "#869bc9"; if (speed < 300) return "#ffb347";
+  if (speed < 500) return "#ae97c1"; if (speed < 700) return "#f4a6c1";
   return "#d4af37";
 }
 
@@ -232,9 +168,7 @@ function displaySentence(text) {
     currentSentence = text; sentenceEl.innerHTML = ""; input.value = ""; startTime = null;
     speedEl.textContent = "0"; speedEl.style.color = getSpeedColor(0); accuracyEl.textContent = "100";
     speedEl.classList.remove("sparkle");
-    [...currentSentence].forEach(char => {
-      const span = document.createElement("span"); span.textContent = char; sentenceEl.appendChild(span);
-    });
+    [...currentSentence].forEach(char => { const span = document.createElement("span"); span.textContent = char; sentenceEl.appendChild(span); });
     sentenceEl.classList.remove("fade-out");
     input.focus();
   }, 200);
@@ -244,6 +178,10 @@ input.addEventListener("input", () => {
   if (!input.value) { startTime = null; speedEl.textContent = "0"; return; }
   if (!startTime) startTime = Date.now();
 
+  // ✨ 소리 재생 (매 입력마다 처음부터 재생)
+  typingSound.currentTime = 0;
+  typingSound.play().catch(e => console.log("소리 재생 실패:", e));
+  
   createParticles();
 
   const elapsedMinutes = (Date.now() - startTime) / 60000;
@@ -292,4 +230,3 @@ window.onload = newSentence;
 </script>
 </body>
 </html>
-
