@@ -14,17 +14,16 @@ body {
   background: #fdebeb;
   font-family: 'Gowun Batang', serif;
   position: relative;
-  overflow: hidden; /* 입자가 화면 밖으로 나갈 때 스크롤 방지 */
+  overflow: hidden;
 }
 
-/* ✨ 입자가 그려질 도화지 */
 #particleCanvas {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* 클릭 방해 금지 */
+  pointer-events: none;
   z-index: 10;
 }
 
@@ -137,7 +136,6 @@ const canvas = document.getElementById("particleCanvas");
 const ctx = canvas.getContext("2d");
 let particles = [];
 
-// ✨ 입자 색상 리스트 (라화 취향 파스텔톤)
 const colors = ["#ffb3ba", "#ffdfba", "#ffffba", "#baffc9", "#bae1ff", "#e0baff"];
 
 function resizeCanvas() {
@@ -195,7 +193,6 @@ function animateParticles() {
 }
 animateParticles();
 
-// --- 기존 로직 ---
 const sentenceEl = document.getElementById("sentence");
 const input = document.getElementById("input");
 const speedEl = document.getElementById("speed");
@@ -247,7 +244,6 @@ input.addEventListener("input", () => {
   if (!input.value) { startTime = null; speedEl.textContent = "0"; return; }
   if (!startTime) startTime = Date.now();
 
-  // ✨ 글자 칠 때마다 입자 생성!
   createParticles();
 
   const elapsedMinutes = (Date.now() - startTime) / 60000;
@@ -296,3 +292,4 @@ window.onload = newSentence;
 </script>
 </body>
 </html>
+
