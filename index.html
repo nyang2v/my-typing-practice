@@ -77,23 +77,14 @@ let currentType = "anime", currentSentence = "", startTime = null, endTime = nul
 let history = [], historyIndex = -1;
 let personalBest = parseInt(localStorage.getItem("dailyTypingBest")) || 0;
 
-function getCharLength(str) {
-  let len = 0;
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    if (code >= 0xAC00 && code <= 0xD7A3) {
-      const charCode = code - 0xAC00;
-      const jong = charCode % 28;
-      const jung = ((charCode - jong) / 28) % 21;
-      const cho = (((charCode - jong) / 28) - jung) / 21; 
-      
-      len += 2;
-      if (jong > 0) len += 1;
-    } else {
-    len += 1;
-    }
-  }
-  return len;
+function getCharJasoCount(char) {
+  const code = char.charCodeAt(0);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    const charCode = code - 0xAC00;
+    const jong = charCode % 28; // 종성
+    return 2 + (jong > 0 ? 1 : 0);
+  } 
+  return 1;
 }
 
 const canvas = document.getElementById("particleCanvas");
@@ -194,23 +185,31 @@ input.addEventListener("input", () => {
   const now = endTime || Date.now();
   const elapsedMinutes = (now - startTime) / 60000;
   
-  const typedString = input.value;
-  const totalStrokes = getCharLength(typedString);
-  const currentSpeed = Math.floor(totalStrokes / elapsedMinutes) || 0;
+  let correctStrokes = 0;
+  let correctChars = 0;
+  const lengthToCompare = Math.min(input.value.length, currentSentence.length);
+
+  for (let i = 0; i < lengthToCompare; i++) {
+    if (input.value[i] === currentSentence[i]) {
+      correctStrokes += getCharJasoCount(input.value[i]);
+      correctChars++;
+    }
+  }
+
+  const currentSpeed = Math.floor(correctStrokes / elapsedMinutes) || 0;
   
   speedEl.textContent = currentSpeed;
   speedEl.style.color = getSpeedColor(currentSpeed);
   if (currentSpeed >= 500) speedEl.classList.add("sparkle"); else speedEl.classList.remove("sparkle");
 
   const spans = sentenceEl.querySelectorAll("span");
-  let correctChars = 0;
   spans.forEach((span, i) => {
     if (!input.value[i]) span.className = "";
-    else if (input.value[i] === span.textContent) { span.className = "correct"; correctChars++; }
+    else if (input.value[i] === span.textContent) { span.className = "correct"; }
     else span.className = "incorrect";
   });
   
-  const acc = Math.floor((correctChars / Math.min(input.value.length, currentSentence.length)) * 100) || 0;
+  const acc = Math.floor((correctChars / lengthToCompare) * 100) || 0;
   accuracyEl.textContent = acc;
 });
 
