@@ -73,11 +73,11 @@ input {
 
 <script src="data.js"></script> 
 <script>
-let currentType = "anime", currentSentence = "", startTime = null, history = [], historyIndex = -1;
-let finalSpeed = 0; // 문장을 완료했을 때의 속도를 저장할 변수
-let isFinished = false; // 문장 완료 여부
-let personalBest = localStorage.getItem("dailyTypingBest") || 0;
+let currentType = "anime", currentSentence = "", startTime = null, endTime = null;
+let history = [], historyIndex = -1;
+let personalBest = parseInt(localStorage.getItem("dailyTypingBest")) || 0;
 
+// 입자 설정
 const canvas = document.getElementById("particleCanvas");
 const ctx = canvas.getContext("2d");
 let particles = [];
@@ -149,8 +149,8 @@ function updateHistory(picked) {
 function displaySentence(text) {
   sentenceEl.classList.add("fade-out");
   setTimeout(() => {
-    currentSentence = text; sentenceEl.innerHTML = ""; input.value = ""; startTime = null;
-    finalSpeed = 0; isFinished = false; // 초기화
+    currentSentence = text; sentenceEl.innerHTML = ""; input.value = ""; 
+    startTime = null; endTime = null;
     speedEl.textContent = "0"; speedEl.style.color = getSpeedColor(0); accuracyEl.textContent = "100";
     speedEl.classList.remove("sparkle");
     [...currentSentence].forEach(char => {
@@ -162,25 +162,25 @@ function displaySentence(text) {
 }
 
 input.addEventListener("input", () => {
-  if (!input.value) { startTime = null; speedEl.textContent = "0"; return; }
+  if (!input.value) { startTime = null; endTime = null; speedEl.textContent = "0"; return; }
   if (!startTime) startTime = Date.now();
-  if (isFinished) return; // 문장 완료 후에는 타수를 갱신하지 않음
 
   createParticles();
 
-  const elapsedMinutes = (Date.now() - startTime) / 60000;
-  const currentSpeed = Math.floor(input.value.length / elapsedMinutes) || 0;
+  if (input.value.length >= currentSentence.length && !endTime) {
+    endTime = Date.now();
+  } else if (input.value.length < currentSentence.length) {
+    endTime = null;
+  }
+
+  const now = endTime || Date.now();
+  const elapsedMinutes = (now - startTime) / 60000;
+  const calcLength = Math.min(input.value.length, currentSentence.length);
+  const currentSpeed = Math.floor(calcLength / elapsedMinutes) || 0;
   
-  // 현재 상태 업데이트
   speedEl.textContent = currentSpeed;
   speedEl.style.color = getSpeedColor(currentSpeed);
   if (currentSpeed >= 500) speedEl.classList.add("sparkle"); else speedEl.classList.remove("sparkle");
-
-  // 문장을 다 쳤는지 확인
-  if (input.value.length === currentSentence.length) {
-    isFinished = true;
-    finalSpeed = currentSpeed; // 마지막 순간의 평균 타수를 고정
-  }
 
   const spans = sentenceEl.querySelectorAll("span");
   let correctChars = 0;
@@ -189,7 +189,9 @@ input.addEventListener("input", () => {
     else if (input.value[i] === span.textContent) { span.className = "correct"; correctChars++; }
     else span.className = "incorrect";
   });
-  accuracyEl.textContent = Math.floor((correctChars / input.value.length) * 100) || 0;
+  
+  const acc = Math.floor((correctChars / Math.min(input.value.length, currentSentence.length)) * 100) || 0;
+  accuracyEl.textContent = acc;
 });
 
 input.addEventListener("keydown", e => {
@@ -197,10 +199,11 @@ input.addEventListener("keydown", e => {
     if (input.value.length >= currentSentence.length) {
       e.preventDefault();
       
-      const finalAccuracy = parseInt(accuracyEl.textContent);
+      const finalSpeed = parseInt(speedEl.textContent.replace(/[^0-9]/g, ""));
+      
+      const isPerfect = input.value.startsWith(currentSentence);
 
-      // 정확도 100%이고, 저장된 finalSpeed가 기존 최고기록보다 높으면 갱신
-      if (finalAccuracy === 100 && finalSpeed > personalBest) {
+      if (isPerfect && finalSpeed > personalBest) {
         personalBest = finalSpeed;
         localStorage.setItem("dailyTypingBest", personalBest);
         bestScoreEl.textContent = personalBest;
