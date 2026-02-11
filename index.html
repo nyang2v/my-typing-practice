@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>💜데일리 타이핑💜</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang&display=swap" rel="stylesheet">
-
 <style>
 body {
   margin: 0;
@@ -15,351 +13,286 @@ body {
   align-items: center;
   background: #fdebeb;
   font-family: 'Gowun Batang', serif;
+  position: relative;
+  overflow: hidden; /* 입자가 화면 밖으로 나갈 때 스크롤 방지 */
+}
+
+/* ✨ 입자가 그려질 도화지 */
+#particleCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* 클릭 방해 금지 */
+  z-index: 10;
+}
+
+.best-record {
+  position: absolute;
+  top: 35px;
+  right: 45px;
+  text-align: right;
+  color: #ae97c1;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.best-record span {
+  font-size: 26px;
+  display: block;
+  color: #e180c4;
+  margin-top: 5px;
+  transition: transform 0.2s ease;
 }
 
 .container {
   text-align: center;
   width: 700px;
+  position: relative;
+  z-index: 20;
 }
 
-.categories {
-  margin-bottom: 14px;
-}
-
+.categories { margin-bottom: 14px; }
 .categories button {
-  margin: 0 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  background: #ecbecd;
-  color: #923e59;
-  font-family: 'Gowun Batang', serif;
+  margin: 0 6px; padding: 6px 14px; border-radius: 20px; border: none;
+  cursor: pointer; background: #ecbecd; color: #923e59;
+  font-family: 'Gowun Batang', serif; transition: 0.3s;
 }
+.categories button.active { background: #ae97c1; color: white; }
 
-.categories button.active {
-  background: #ae97c1;
-  color: white;
-}
-
-.title {
-  font-size: 22px;
-  color: #ae97c1;
-  margin-bottom: 22px;
-  letter-spacing: 2px;
-}
-
+.title { font-size: 22px; color: #ae97c1; margin-bottom: 22px; letter-spacing: 2px; }
 .sentence {
-  font-size: 26px;
-  margin-bottom: 26px;
-  color: #e180c4;
-  transition: opacity 0.4s ease;
-  white-space: nowrap;
+  font-size: 26px; margin-bottom: 26px; color: #e180c4;
+  transition: opacity 0.4s ease; white-space: nowrap; min-height: 40px;
 }
-
-.fade-out {
-  opacity: 0;
-}
-
+.fade-out { opacity: 0; }
 .correct { color: #869bc9; }
 .incorrect { color: #ea7594; }
 
 input {
-  width: 520px;
-  padding: 14px 18px;
-  font-size: 25px;
-  border-radius: 16px;
-  border: none;
-  outline: none;
-  text-align: center;
-  background: #ecbecd;
-  color: #923e59;
-  font-family: 'Gowun Batang', serif;
+  width: 520px; padding: 14px 18px; font-size: 25px; border-radius: 16px;
+  border: none; outline: none; text-align: center;
+  background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
 }
 
-input::placeholder {
-  color: #c36081;
-}
-
-/* 추가된 내비게이션 스타일 */
-.navigation-hints {
-  margin-top: 25px;
-}
-
-.nav-buttons {
-  margin-bottom: 10px;
-}
-
+.navigation-hints { margin-top: 25px; }
+.nav-buttons { margin-bottom: 10px; }
 .nav-buttons button {
-  margin: 0 5px;
-  padding: 8px 16px;
-  border-radius: 12px;
-  border: 1px solid #ae97c1;
-  background: transparent;
-  color: #ae97c1;
-  cursor: pointer;
-  font-family: 'Gowun Batang', serif;
-  transition: 0.3s;
+  margin: 0 5px; padding: 8px 16px; border-radius: 12px;
+  border: 1px solid #ae97c1; background: transparent; color: #ae97c1;
+  cursor: pointer; font-family: 'Gowun Batang', serif; transition: 0.3s;
 }
 
-.nav-buttons button:hover {
-  background: #ae97c1;
-  color: white;
-}
+.stats-container { display: flex; justify-content: center; align-items: baseline; gap: 40px; margin-top: 25px; }
+.stat-item { font-size: 19px; color: #e180c4; }
+.stat-value { font-size: 22px; display: inline-block; min-width: 45px; text-align: left; margin-left: 5px; }
 
-.shortcut-guide {
-  font-size: 14px;
-  color: #c36081;
-  margin: 0;
-  opacity: 0.8;
-}
+.sparkle { filter: drop-shadow(0 0 6px rgba(255,255,255,0.9)); animation: pulse 0.5s infinite alternate; display: inline-block; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
 
-.shortcut-guide span {
-  background: #ecbecd;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-.speed {
-  margin-top: 18px;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.sparkle {
-  filter: drop-shadow(0 0 6px rgba(255,255,255,0.9));
-}
+.shortcut-guide { font-size: 14px; color: #c36081; margin: 0; opacity: 0.8; }
+.shortcut-guide span { background: #ecbecd; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<canvas id="particleCanvas"></canvas>
 
+<div class="best-record">나의 최고 타수<span id="bestScore">0</span></div>
+
+<div class="container">
   <div class="categories">
     <button class="active" data-type="anime">만화</button>
     <button data-type="movie">영화</button>
     <button data-type="drama">드라마</button>
   </div>
-
   <div class="title">오늘의 문장</div>
-
-  <div class="sentence" id="sentence"></div>
-
-  <input id="input" placeholder="여기에 그대로 쳐보세요" autocomplete="off">
-
+  <div id="sentence" class="sentence"></div>
+  <input id="input" placeholder="여기에 그대로 쳐보세요💗" autocomplete="off">
   <div class="navigation-hints">
     <div class="nav-buttons">
       <button id="prevBtn">이전 문장</button>
       <button id="nextBtn">다음 문장</button>
     </div>
-    <p class="shortcut-guide">팁: 단축키 <span>Alt + ← / →</span> 를 이용해 보세요!</p>
+    <p class="shortcut-guide">팁: 이전과 다음 문장 단축키 <span>Alt + ← / →</span> </p>
   </div>
-
-  <div class="speed" id="speed">0</div>
-
+  <div class="stats-container">
+    <div class="stat-item">타수 <span id="speed" class="stat-value">0</span></div>
+    <div class="stat-item">정확도 <span id="accuracy" class="stat-value">100</span>%</div>
+  </div>
 </div>
 
+<script src="data.js"></script> 
 <script>
-const data = {
-  anime: [
-    "정의의 이름으로 널 용서하지 않겠다!",
-    "주님, 오늘도 정의로운 도둑이 되는 걸 허락해주세요.",
-    "찾아라 비밀의 열쇠, 미로같이 얽힌 모험들.",
-    "밤하늘 저 멀리서 빛나고 있는 꿈결같은 우리의 사랑",
-    "전설 속에서 이루지 못한 사랑, 그 약속 지키러 넌 온거야",
-    "자 이제 시작이야, 내 꿈을 위한 여행~ 피카츄",
-    "내 어린 시절 우연히 들었던 믿지 못할 한마디",
-    "찾아라 드래곤볼 세상에서 제일 신비로운 비밀",
-    "마지막에 웃기 위해 우리들의 오늘을 기꺼이 이겨내가자",
-    "그랑죠 그랑죠 마법으로 빛나는 그랑죠",
-    "옛날 옛날 한 옛날에 다섯아이가 우주 멀리 아주 멀리 사라졌다네",
-    "아침 해가 빛나는 끝이 없는 바닷가",
-    "너는 할 수 있어, 세계의 피구왕, 통키 파이팅 피구왕왕왕",
-    "뜨거운 코트를 가르며 너에게 가고 있어",
-    "무지개 다리 놓고 가고 싶어도 지금은 갈 수 없는 저 먼 우주는",
-    "아주 먼 옛날 우리가 있었지 의리있고 용감한 정의의 용사",
-    "오늘 밤엔 무슨 일을 할까 누구에게 기쁨을 줄까",
-    "치키치키 차카차카 초코초코초",
-    "뛰어라 뛰어 친구야 이겨라 이겨라",
-    "뾰로롱 꼬마 마녀 열두살난 마법, 마법의 천사",
-    "한치 두치 세치 네치 뿌꾸 빵 뿌꾸 빵",
-    "요리보고 조리봐도 알 수 없는 둘리 둘리",
-    "만날 수 없어 만나고 싶은데 그런 슬픈 기분인걸",
-    "야빠빠 야빠빠 웅~묘익천 이곳에 빠지면 아빠 팬더곰",
-    "저 높은 하늘을 새가 되어 날아가고 싶어",
-    "외로운 사람들의 마음을 열어줄거야",
-    "평화를 선포하는 우주전사 우리들",
-    "우리의 몸에는 아무도 볼 수 없는 힘이 있어요 비밀을 갖고 있어요",
-    "푸르게 빛나는 아름다운 지구의 평화를 짓밟는 우주 원시 괴물들"
-  ],
-  movie: [
-    "인생은 원래 계획대로 안 돼.",
-    "완벽한 사람은 없다.",
-    "실수 좀 하면 어때.",
-    "행복은 대충 살아도 온다.",
-    "웃기다 보면 살아진다.",
-    "인생이 코미디인 날도 있다.",
-    "너무 잘 살 필요는 없어.",
-    "묻고 더블로 가!",
-    "니가 가라, 하와이.",
-    "살려는 드릴게.",
-    "내가 왕이 될 상인가.",
-    "마, 니 내 누군지 아니?",
-    "고마해라, 마이 묵었다 아이가.",
-    "사람이 죄를 지으면 벌을 받아야지.",
-    "너는 다 계획이 있구나.",
-    "싸늘하다. 가슴에 비수가 날아와 꽂힌다.",
-    "지금까지 이런 맛은 없었다. 이것은 갈비인가 통닭인가. 네 수원 왕갈비 통닭입니다."
-  ],
-  drama: [
-    "누구의 인생이건 신이 머물다 가는 순간이 있다.",
-    "좋아하는 데 이유가 어딨어",
-    "나는 너랑 있으면 나답다.",
-    "설레는 건 늘 사소한 거야.",
-    "연애는 타이밍이고, 결심이야.",
-    "네가 웃으면 다 괜찮아져.",
-    "나쁜 놈은 원래 빨리 죽어. 그래야 착한 사람들이 오래 살거든.",
-    "나는 너한테만 약해.",
-    "우연인 척 다가온 게 사랑이야.",
-    "이래서 남들 놀아볼 때 놀아야지 나이 들어서 사고를 안 치는데..",
-    "우리의 걸음은 우리를 퍽 닮아있었다."
-  ]
-};
-
 let currentType = "anime";
 let currentSentence = "";
 let startTime = null;
 let history = []; 
 let historyIndex = -1;
+let personalBest = localStorage.getItem("dailyTypingBest") || 0;
 
+const canvas = document.getElementById("particleCanvas");
+const ctx = canvas.getContext("2d");
+let particles = [];
+
+// ✨ 입자 색상 리스트 (라화 취향 파스텔톤)
+const colors = ["#ffb3ba", "#ffdfba", "#ffffba", "#baffc9", "#bae1ff", "#e0baff"];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.size = Math.random() * 8 + 2;
+    this.speedX = Math.random() * 6 - 3;
+    this.speedY = Math.random() * 6 - 3;
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+    this.opacity = 1;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    this.opacity -= 0.02;
+    if (this.size > 0.2) this.size -= 0.1;
+  }
+  draw() {
+    ctx.globalAlpha = this.opacity;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function createParticles() {
+  const inputRect = document.getElementById("input").getBoundingClientRect();
+  const x = inputRect.left + Math.random() * inputRect.width;
+  const y = inputRect.top + Math.random() * inputRect.height;
+  for (let i = 0; i < 5; i++) {
+    particles.push(new Particle(x, y));
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < particles.length; i++) {
+    particles[i].update();
+    particles[i].draw();
+    if (particles[i].opacity <= 0) {
+      particles.splice(i, 1);
+      i--;
+    }
+  }
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// --- 기존 로직 ---
 const sentenceEl = document.getElementById("sentence");
 const input = document.getElementById("input");
 const speedEl = document.getElementById("speed");
+const accuracyEl = document.getElementById("accuracy");
+const bestScoreEl = document.getElementById("bestScore");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 
+bestScoreEl.textContent = personalBest;
+
+function getSpeedColor(speed) {
+  if (speed < 100) return "#869bc9"; if (speed < 200) return "#8fbc93";
+  if (speed < 300) return "#ffb347"; if (speed < 400) return "#ff6f6f";
+  if (speed < 500) return "#ae97c1"; if (speed < 600) return "#e180c4";
+  if (speed < 700) return "#f4a6c1"; if (speed < 800) return "#b39ddb";
+  if (speed < 900) return "#6fa8dc"; if (speed < 1000) return "#bcdffb";
+  return "#d4af37";
+}
+
 function newSentence() {
   const list = data[currentType];
-  const picked = list[Math.floor(Math.random() * list.length)];
-  
-  history = history.slice(0, historyIndex + 1);
-  history.push(picked);
-  historyIndex++;
+  if (list.length <= 1) { updateHistory(list[0]); return; }
+  let picked;
+  do { picked = list[Math.floor(Math.random() * list.length)]; } while (picked === currentSentence);
+  updateHistory(picked);
+}
 
+function updateHistory(picked) {
+  history = history.slice(0, historyIndex + 1);
+  history.push(picked); historyIndex++;
   displaySentence(picked);
 }
 
 function displaySentence(text) {
   sentenceEl.classList.add("fade-out");
-  
   setTimeout(() => {
-    currentSentence = text;
-    sentenceEl.innerHTML = "";
-    input.value = "";
-    startTime = null;
-    speedEl.textContent = "0";
+    currentSentence = text; sentenceEl.innerHTML = ""; input.value = ""; startTime = null;
+    speedEl.textContent = "0"; speedEl.style.color = getSpeedColor(0); accuracyEl.textContent = "100";
     speedEl.classList.remove("sparkle");
-
     [...currentSentence].forEach(char => {
-      const span = document.createElement("span");
-      span.textContent = char;
-      sentenceEl.appendChild(span);
+      const span = document.createElement("span"); span.textContent = char; sentenceEl.appendChild(span);
     });
     sentenceEl.classList.remove("fade-out");
+    input.focus();
   }, 200);
 }
 
-function speedColor(speed) {
-  if (speed < 100) return "#bcdffb";
-  if (speed < 200) return "#ffb347";
-  if (speed < 300) return "#ff6f6f";
-  if (speed < 400) return "#8fbc93";
-  if (speed < 500) return "#6fa8dc";
-  if (speed < 600) return "#b39ddb";
-  if (speed < 700) return "#f4a6c1";
-  if (speed < 800) return "#b08d57";
-  return "#000";
-}
-
 input.addEventListener("input", () => {
+  if (!input.value) { startTime = null; speedEl.textContent = "0"; return; }
   if (!startTime) startTime = Date.now();
 
-  const minutes = (Date.now() - startTime) / 60000;
-  const speed = Math.floor(input.value.length / minutes) || 0;
+  // ✨ 글자 칠 때마다 입자 생성!
+  createParticles();
 
-  speedEl.style.color = speedColor(speed);
+  const elapsedMinutes = (Date.now() - startTime) / 60000;
+  const speed = Math.floor(input.value.length / elapsedMinutes) || 0;
   speedEl.textContent = speed;
-
-  if (speed >= 500) {
-    speedEl.classList.add("sparkle");
-    speedEl.textContent = `✨ ${speed} ✨`;
-  }
+  speedEl.style.color = getSpeedColor(speed);
+  if (speed >= 500) speedEl.classList.add("sparkle"); else speedEl.classList.remove("sparkle");
 
   const spans = sentenceEl.querySelectorAll("span");
+  let correctChars = 0;
   spans.forEach((span, i) => {
     if (!input.value[i]) span.className = "";
-    else if (input.value[i] === span.textContent) span.className = "correct";
+    else if (input.value[i] === span.textContent) { span.className = "correct"; correctChars++; }
     else span.className = "incorrect";
   });
+  accuracyEl.textContent = Math.floor((correctChars / input.value.length) * 100) || 0;
 });
 
 input.addEventListener("keydown", e => {
-  if ((e.key === "Enter" || e.key === " ") && input.value === currentSentence) {
-    e.preventDefault();
-    newSentence();
-  }
-
-  // Alt + 오른쪽 화살표: 다음 기록 혹은 새 문장
-  if (e.key === "ArrowRight" && e.altKey) {
-    e.preventDefault();
-    if (historyIndex < history.length - 1) {
-      historyIndex++;
-      displaySentence(history[historyIndex]);
-    } else {
+  if (e.key === "Enter" || e.key === " ") {
+    if (input.value.length >= currentSentence.length) {
+      e.preventDefault();
+      const finalSpeed = parseInt(speedEl.innerText.replace(/[^0-9]/g, ""));
+      const finalAccuracy = parseInt(accuracyEl.textContent);
+      if (finalAccuracy === 100 && finalSpeed > personalBest) {
+        personalBest = finalSpeed; localStorage.setItem("dailyTypingBest", personalBest);
+        bestScoreEl.textContent = personalBest; bestScoreEl.style.transform = "scale(1.3)";
+        setTimeout(() => bestScoreEl.style.transform = "scale(1)", 200);
+      }
       newSentence();
     }
   }
-
-  // Alt + 왼쪽 화살표: 이전 기록으로
-  if (e.key === "ArrowLeft" && e.altKey) {
-    e.preventDefault();
-    if (historyIndex > 0) {
-      historyIndex--;
-      displaySentence(history[historyIndex]);
-    }
-  }
+  if (e.key === "ArrowRight" && e.altKey) { e.preventDefault(); if (historyIndex < history.length - 1) { historyIndex++; displaySentence(history[historyIndex]); } else newSentence(); }
+  if (e.key === "ArrowLeft" && e.altKey) { e.preventDefault(); if (historyIndex > 0) { historyIndex--; displaySentence(history[historyIndex]); } }
 });
 
-// 버튼 클릭 이벤트
-prevBtn.addEventListener("click", () => {
-  if (historyIndex > 0) {
-    historyIndex--;
-    displaySentence(history[historyIndex]);
-  }
-});
-
-nextBtn.addEventListener("click", () => {
-  if (historyIndex < history.length - 1) {
-    historyIndex++;
-    displaySentence(history[historyIndex]);
-  } else {
-    newSentence();
-  }
-});
-
+prevBtn.addEventListener("click", () => { if (historyIndex > 0) { historyIndex--; displaySentence(history[historyIndex]); } });
+nextBtn.addEventListener("click", () => { if (historyIndex < history.length - 1) { historyIndex++; displaySentence(history[historyIndex]); } else newSentence(); });
 document.querySelectorAll(".categories button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".categories button").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentType = btn.dataset.type;
-    newSentence();
+    btn.classList.add("active"); currentType = btn.dataset.type; newSentence();
   });
 });
-
-newSentence();
+window.onload = newSentence;
 </script>
-
 </body>
 </html>
