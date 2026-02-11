@@ -5,11 +5,9 @@
 <title>💜데일리 타이핑💜</title>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang&display=swap" rel="stylesheet">
 <style>
-/* CSS는 이전과 동일하지만, 클릭 유도를 위해 body에 cursor: pointer를 추가했어요 */
 body {
   margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center;
   background: #fdebeb; font-family: 'Gowun Batang', serif; position: relative; overflow: hidden;
-  cursor: pointer; 
 }
 #particleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 .best-record { position: absolute; top: 35px; right: 45px; text-align: right; color: #ae97c1; font-size: 15px; letter-spacing: 1px; }
@@ -59,7 +57,7 @@ input {
   </div>
   <div class="title">오늘의 문장</div>
   <div id="sentence" class="sentence"></div>
-  <input id="input" placeholder="먼저 화면을 한 번 클릭하고 쳐보세요!💗" autocomplete="off">
+  <input id="input" placeholder="여기에 그대로 쳐보세요" autocomplete="off">
   <div class="navigation-hints">
     <div class="nav-buttons">
       <button id="prevBtn">이전 문장</button>
@@ -75,24 +73,11 @@ input {
 
 <script src="data.js"></script> 
 <script>
-// --- [1] 오디오 설정 ---
-// 타자기 소리 라이브러리 (무료 소스)
-const typeSoundUrl = "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3";
-const typingSound = new Audio(typeSoundUrl);
-typingSound.volume = 0.5; // 소리 크기 조절 (0.0 ~ 1.0)
+let currentType = "anime", currentSentence = "", startTime = null, history = [], historyIndex = -1;
+let finalSpeed = 0; // 문장을 완료했을 때의 속도를 저장할 변수
+let isFinished = false; // 문장 완료 여부
+let personalBest = localStorage.getItem("dailyTypingBest") || 0;
 
-// 브라우저 정책 해결을 위한 함수
-function unlockAudio() {
-  typingSound.play().then(() => {
-    typingSound.pause();
-    typingSound.currentTime = 0;
-  });
-  document.removeEventListener('click', unlockAudio);
-  document.getElementById("input").placeholder = "여기에 그대로 쳐보세요💗";
-}
-document.addEventListener('click', unlockAudio);
-
-// --- [2] 입자 애니메이션 로직 ---
 const canvas = document.getElementById("particleCanvas");
 const ctx = canvas.getContext("2d");
 let particles = [];
@@ -132,10 +117,6 @@ function animateParticles() {
 }
 animateParticles();
 
-// --- [3] 메인 타이핑 로직 ---
-let currentType = "anime", currentSentence = "", startTime = null, history = [], historyIndex = -1;
-let personalBest = localStorage.getItem("dailyTypingBest") || 0;
-
 const sentenceEl = document.getElementById("sentence"), input = document.getElementById("input");
 const speedEl = document.getElementById("speed"), accuracyEl = document.getElementById("accuracy"), bestScoreEl = document.getElementById("bestScore");
 const prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElementById("nextBtn");
@@ -143,8 +124,11 @@ const prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElemen
 bestScoreEl.textContent = personalBest;
 
 function getSpeedColor(speed) {
-  if (speed < 100) return "#869bc9"; if (speed < 300) return "#ffb347";
-  if (speed < 500) return "#ae97c1"; if (speed < 700) return "#f4a6c1";
+  if (speed < 100) return "#869bc9"; if (speed < 200) return "#8fbc93";
+  if (speed < 300) return "#ffb347"; if (speed < 400) return "#ff6f6f";
+  if (speed < 500) return "#ae97c1"; if (speed < 600) return "#e180c4";
+  if (speed < 700) return "#f4a6c1"; if (speed < 800) return "#b39ddb";
+  if (speed < 900) return "#6fa8dc"; if (speed < 1000) return "#bcdffb";
   return "#d4af37";
 }
 
@@ -166,9 +150,12 @@ function displaySentence(text) {
   sentenceEl.classList.add("fade-out");
   setTimeout(() => {
     currentSentence = text; sentenceEl.innerHTML = ""; input.value = ""; startTime = null;
+    finalSpeed = 0; isFinished = false; // 초기화
     speedEl.textContent = "0"; speedEl.style.color = getSpeedColor(0); accuracyEl.textContent = "100";
     speedEl.classList.remove("sparkle");
-    [...currentSentence].forEach(char => { const span = document.createElement("span"); span.textContent = char; sentenceEl.appendChild(span); });
+    [...currentSentence].forEach(char => {
+      const span = document.createElement("span"); span.textContent = char; sentenceEl.appendChild(span);
+    });
     sentenceEl.classList.remove("fade-out");
     input.focus();
   }, 200);
@@ -177,18 +164,23 @@ function displaySentence(text) {
 input.addEventListener("input", () => {
   if (!input.value) { startTime = null; speedEl.textContent = "0"; return; }
   if (!startTime) startTime = Date.now();
+  if (isFinished) return; // 문장 완료 후에는 타수를 갱신하지 않음
 
-  // ✨ 소리 재생 (매 입력마다 처음부터 재생)
-  typingSound.currentTime = 0;
-  typingSound.play().catch(e => console.log("소리 재생 실패:", e));
-  
   createParticles();
 
   const elapsedMinutes = (Date.now() - startTime) / 60000;
-  const speed = Math.floor(input.value.length / elapsedMinutes) || 0;
-  speedEl.textContent = speed;
-  speedEl.style.color = getSpeedColor(speed);
-  if (speed >= 500) speedEl.classList.add("sparkle"); else speedEl.classList.remove("sparkle");
+  const currentSpeed = Math.floor(input.value.length / elapsedMinutes) || 0;
+  
+  // 현재 상태 업데이트
+  speedEl.textContent = currentSpeed;
+  speedEl.style.color = getSpeedColor(currentSpeed);
+  if (currentSpeed >= 500) speedEl.classList.add("sparkle"); else speedEl.classList.remove("sparkle");
+
+  // 문장을 다 쳤는지 확인
+  if (input.value.length === currentSentence.length) {
+    isFinished = true;
+    finalSpeed = currentSpeed; // 마지막 순간의 평균 타수를 고정
+  }
 
   const spans = sentenceEl.querySelectorAll("span");
   let correctChars = 0;
@@ -204,11 +196,15 @@ input.addEventListener("keydown", e => {
   if (e.key === "Enter" || e.key === " ") {
     if (input.value.length >= currentSentence.length) {
       e.preventDefault();
-      const finalSpeed = parseInt(speedEl.innerText.replace(/[^0-9]/g, ""));
+      
       const finalAccuracy = parseInt(accuracyEl.textContent);
+
+      // 정확도 100%이고, 저장된 finalSpeed가 기존 최고기록보다 높으면 갱신
       if (finalAccuracy === 100 && finalSpeed > personalBest) {
-        personalBest = finalSpeed; localStorage.setItem("dailyTypingBest", personalBest);
-        bestScoreEl.textContent = personalBest; bestScoreEl.style.transform = "scale(1.3)";
+        personalBest = finalSpeed;
+        localStorage.setItem("dailyTypingBest", personalBest);
+        bestScoreEl.textContent = personalBest;
+        bestScoreEl.style.transform = "scale(1.3)";
         setTimeout(() => bestScoreEl.style.transform = "scale(1)", 200);
       }
       newSentence();
