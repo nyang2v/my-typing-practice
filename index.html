@@ -87,20 +87,25 @@ body {
 
 input {
   width: 100%; max-width: 600px; padding: 14px 18px; font-size: 25px; border-radius: 16px;
-  border: 2px solid transparent; 
-  outline: none; text-align: center; background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
-  box-sizing: border-box; transition: box-shadow 0.3s, border-color 0.3s;
+  border: 3px solid transparent; /* 테두리 공간 3px 미리 확보 */
+  outline: none; text-align: center; 
+  background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
+  box-sizing: border-box; transition: all 0.2s;
 }
 
 @keyframes rainbowGlow {
-  0% { box-shadow: 0 0 15px #ff6f6f; border-color: #ff6f6f; }
-  25% { box-shadow: 0 0 15px #ffffba; border-color: #ffffba; }
-  50% { box-shadow: 0 0 15px #baffc9; border-color: #baffc9; }
-  75% { box-shadow: 0 0 15px #bae1ff; border-color: #bae1ff; }
-  100% { box-shadow: 0 0 15px #e180c4; border-color: #e180c4; }
+  0% { border-color: #ff6f6f; box-shadow: 0 0 15px #ff6f6f; }
+  33% { border-color: #ffd700; box-shadow: 0 0 15px #ffd700; }
+  66% { border-color: #4facfe; box-shadow: 0 0 15px #4facfe; }
+  100% { border-color: #e180c4; box-shadow: 0 0 15px #e180c4; }
 }
+
+/* 피버 모드 클래스 (배경을 하얗게 바꿔서 눈에 띄게) */
 .fever-mode {
-  animation: rainbowGlow 1.5s linear infinite alternate;
+  animation: rainbowGlow 0.8s linear infinite alternate !important;
+  background: #ffffff !important; /* 배경 흰색 */
+  color: #333 !important; /* 글씨 진하게 */
+  border-width: 3px !important;
 }
 
 .navigation-hints { margin-top: 25px; }
@@ -392,7 +397,7 @@ input.addEventListener("input", (e) => {
   if (e.inputType !== "deleteContentBackward" && val[lastIndex] === currentSentence[lastIndex]) {
     consecutiveCorrect++;
     
-      if (consecutiveCorrect >= 10) {
+    if (consecutiveCorrect >= 10) {
       input.classList.add("fever-mode");
     }
 
