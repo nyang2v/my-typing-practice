@@ -10,8 +10,47 @@ body {
   background: #fdebeb; font-family: 'Gowun Batang', serif; position: relative; overflow: hidden;
 }
 #particleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-.best-record { position: absolute; top: 35px; right: 45px; text-align: right; color: #ae97c1; font-size: 15px; letter-spacing: 1px; }
-.best-record span { font-size: 26px; display: block; color: #e180c4; margin-top: 5px; transition: transform 0.2s ease; }
+
+.best-record {
+  position: absolute;
+  top: 35px;
+  right: 45px;
+  text-align: right;
+  color: #ae97c1;
+  font-size: 15px;
+  letter-spacing: 1px;
+  z-index: 30;
+}
+
+.best-record span {
+  font-size: 26px;
+  display: block;
+  color: #e180c4;
+  margin-top: 5px;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.reset-btn {
+  background: transparent;
+  border: 1px solid #ae97c1;
+  border-radius: 10px;
+  color: #ae97c1;
+  font-family: 'Gowun Batang', serif;
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+  margin-top: 8px;
+  opacity: 0.6;
+  transition: 0.2s;
+}
+
+.reset-btn:hover {
+  opacity: 1;
+  background: #ae97c1;
+  color: white;
+}
+
 .container { text-align: center; width: 700px; position: relative; z-index: 20; }
 .categories { margin-bottom: 14px; }
 .categories button {
@@ -47,7 +86,12 @@ input {
 <body>
 
 <canvas id="particleCanvas"></canvas>
-<div class="best-record">나의 최고 타수<span id="bestScore">0</span></div>
+
+<div class="best-record">
+  나의 최고 타수
+  <span id="bestScore">0</span>
+  <button id="resetBtn" class="reset-btn">초기화</button>
+</div>
 
 <div class="container">
   <div class="categories">
@@ -81,12 +125,13 @@ function getCharJasoCount(char) {
   const code = char.charCodeAt(0);
   if (code >= 0xAC00 && code <= 0xD7A3) {
     const charCode = code - 0xAC00;
-    const jong = charCode % 28; // 종성
-    return 2 + (jong > 0 ? 1 : 0);
+    const jong = charCode % 28;
+    return 2 + (jong > 0 ? 1 : 0); 
   } 
-  return 1;
+  return 1; 
 }
 
+// 입자 설정
 const canvas = document.getElementById("particleCanvas");
 const ctx = canvas.getContext("2d");
 let particles = [];
@@ -127,10 +172,19 @@ function animateParticles() {
 animateParticles();
 
 const sentenceEl = document.getElementById("sentence"), input = document.getElementById("input");
-const speedEl = document.getElementById("speed"), accuracyEl = document.getElementById("accuracy"), bestScoreEl = document.getElementById("bestScore");
+const speedEl = document.getElementById("speed"), accuracyEl = document.getElementById("accuracy");
+const bestScoreEl = document.getElementById("bestScore"), resetBtn = document.getElementById("resetBtn");
 const prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElementById("nextBtn");
 
 bestScoreEl.textContent = personalBest;
+
+resetBtn.addEventListener("click", () => {
+  if (confirm("정말로 최고 기록을 0으로 초기화할까요?🥺")) {
+    personalBest = 0;
+    localStorage.setItem("dailyTypingBest", 0);
+    bestScoreEl.textContent = 0;
+  }
+});
 
 function getSpeedColor(speed) {
   if (speed < 100) return "#869bc9"; if (speed < 200) return "#8fbc93";
@@ -179,11 +233,11 @@ input.addEventListener("input", () => {
   if (input.value.length >= currentSentence.length && !endTime) {
     endTime = Date.now();
   } else if (input.value.length < currentSentence.length) {
-    endTime = null;
+    endTime = null; 
   }
 
   const now = endTime || Date.now();
-  const elapsedMinutes = (now - startTime) / 60000;
+  const elapsedMinutes = Math.max((now - startTime) / 60000, 0.0001);
   
   let correctStrokes = 0;
   let correctChars = 0;
@@ -196,7 +250,7 @@ input.addEventListener("input", () => {
     }
   }
 
-  const currentSpeed = Math.floor(correctStrokes / elapsedMinutes) || 0;
+  const currentSpeed = Math.floor(correctStrokes / elapsedMinutes);
   
   speedEl.textContent = currentSpeed;
   speedEl.style.color = getSpeedColor(currentSpeed);
