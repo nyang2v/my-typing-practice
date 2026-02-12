@@ -38,8 +38,7 @@ body {
 .finish-btn:hover { transform: scale(1.05); background: #923e59; }
 
 .modal-overlay {
-  display: none;
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(0, 0, 0, 0.5); z-index: 100;
   justify-content: center; align-items: center;
 }
@@ -55,6 +54,17 @@ body {
   border-radius: 15px; font-family: 'Gowun Batang', serif; font-size: 16px; cursor: pointer;
 }
 @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.goodbye-screen {
+  display: none;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: #fdebeb; z-index: 200;
+  flex-direction: column; justify-content: center; align-items: center;
+  text-align: center; animation: fadeIn 1s ease;
+}
+.goodbye-text { font-size: 30px; color: #ae97c1; margin-bottom: 20px; }
+.goodbye-sub { font-size: 18px; color: #923e59; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .container { text-align: center; width: 700px; position: relative; z-index: 20; }
 .categories { margin-bottom: 14px; }
@@ -92,15 +102,20 @@ input {
 
 <canvas id="particleCanvas"></canvas>
 
+<div id="goodbyeScreen" class="goodbye-screen">
+  <div class="goodbye-text">오늘도 수고 많았어요!💜</div>
+  <div class="goodbye-sub">창을 닫고 스트레칭 해주세요 ^o^</div>
+</div>
+
 <div id="resultModal" class="modal-overlay">
   <div class="modal-content">
-    <div class="modal-title">수고하셨어요!💖</div>
+    <div class="modal-title">수고하셨어요! 💜</div>
     <div class="modal-text" id="resultText">
       오늘의 타자 연습은<br>
-      0분 동안, 0개 문장을 타이핑했어요!^o^<br>
-      내일 또 만나요!>_<
+      0분 동안, 0개 문장을 연습했어요!^o^<br>
+      내일 또 만나요!
     </div>
-    <button class="modal-close-btn" onclick="closeModal()">안녕!</button>
+    <button class="modal-close-btn" onclick="quitPractice()">안녕!</button>
   </div>
 </div>
 
@@ -140,9 +155,8 @@ let currentType = "anime", currentSentence = "", startTime = null, endTime = nul
 let history = [], historyIndex = -1;
 let personalBest = parseInt(localStorage.getItem("dailyTypingBest")) || 0;
 let timerInterval = null; 
-
-let sessionStart = Date.now();
-let completedSentences = 0;
+let sessionStart = Date.now(); 
+let completedSentences = 0; 
 
 function getCharJasoCount(char) {
   const code = char.charCodeAt(0);
@@ -219,14 +233,17 @@ function showResult() {
 
   const textEl = document.getElementById("resultText");
   textEl.innerHTML = `오늘의 타자 연습은<br>
-  <strong>${timeStr}</strong> 동안, <strong>${completedSentences}개</strong> 문장을 연습했어요!^o^<br>
+  <strong>${timeStr}</strong> 동안, <strong>${completedSentences}개</strong> 문장을 타이핑했어요!^o^<br>
   내일 또 만나요!`;
 
   document.getElementById("resultModal").style.display = "flex";
 }
 
-function closeModal() {
-  document.getElementById("resultModal").style.display = "none";
+function quitPractice() {
+  window.close();
+  
+  document.getElementById("resultModal").style.display = "none"; 
+  document.getElementById("goodbyeScreen").style.display = "flex"; 
 }
 
 function getSpeedColor(speed) {
