@@ -19,12 +19,26 @@ body {
   font-size: 26px; display: block; color: #e180c4; margin-top: 5px;
   font-weight: bold; transition: transform 0.2s ease;
 }
+
 .reset-btn {
-  background: transparent; border: 1px solid #ae97c1; border-radius: 10px;
-  color: #ae97c1; font-family: 'Gowun Batang', serif; font-size: 11px;
-  padding: 3px 8px; cursor: pointer; margin-top: 8px; opacity: 0.6; transition: 0.2s;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid #923e59;
+  border-radius: 10px;
+  color: #923e59;
+  font-family: 'Gowun Batang', serif;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 10px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-.reset-btn:hover { opacity: 1; background: #ae97c1; color: white; }
+
+.reset-btn:hover {
+  background: #923e59;
+  color: white;
+}
 
 .container { text-align: center; width: 700px; position: relative; z-index: 20; }
 .categories { margin-bottom: 14px; }
@@ -76,7 +90,7 @@ input {
   </div>
   <div class="title">오늘의 문장</div>
   <div id="sentence" class="sentence"></div>
-  <input id="input" placeholder="여기에 그대로 쳐보세요" autocomplete="off">
+  <input id="input" placeholder="여기에 그대로 쳐보세요^o^" autocomplete="off">
   <div class="navigation-hints">
     <div class="nav-buttons">
       <button id="prevBtn">이전 문장</button>
@@ -95,7 +109,7 @@ input {
 let currentType = "anime", currentSentence = "", startTime = null, endTime = null;
 let history = [], historyIndex = -1;
 let personalBest = parseInt(localStorage.getItem("dailyTypingBest")) || 0;
-let timerInterval = null;
+let timerInterval = null; 
 
 function getCharJasoCount(char) {
   const code = char.charCodeAt(0);
@@ -154,7 +168,7 @@ const prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElemen
 bestScoreEl.textContent = personalBest;
 
 resetBtn.addEventListener("click", () => {
-  if (confirm("정말로 최고 기록을 0으로 초기화할까요?🥺")) {
+  if (confirm("정말로 최고 기록을 0으로 초기화할까요?")) {
     personalBest = 0;
     localStorage.setItem("dailyTypingBest", 0);
     bestScoreEl.textContent = 0;
@@ -187,7 +201,7 @@ function updateRealTimeStats() {
     }
   }
 
-   const currentSpeed = Math.floor(correctStrokes / elapsedMinutes);
+  const currentSpeed = Math.floor(correctStrokes / elapsedMinutes);
   
   speedEl.textContent = currentSpeed;
   speedEl.style.color = getSpeedColor(currentSpeed);
@@ -205,7 +219,7 @@ function updateRealTimeStats() {
 }
 
 function newSentence() {
-  clearInterval(timerInterval);
+  clearInterval(timerInterval); 
   timerInterval = null;
 
   const list = data[currentType];
@@ -256,11 +270,11 @@ input.addEventListener("input", () => {
 
   if (input.value.length >= currentSentence.length && !endTime) {
     endTime = Date.now();
-    clearInterval(timerInterval);
-    updateRealTimeStats();
+    clearInterval(timerInterval); 
+    updateRealTimeStats(); 
   } else if (input.value.length < currentSentence.length) {
     endTime = null;
-      if (!timerInterval && startTime) {
+    if (!timerInterval && startTime) {
       timerInterval = setInterval(updateRealTimeStats, 50);
     }
   }
