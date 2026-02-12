@@ -69,23 +69,6 @@ body {
   position: relative; z-index: 20; padding: 0 20px; box-sizing: border-box; 
 }
 
-.pet-container {
-  font-size: 40px; margin-bottom: 10px; height: 50px;
-  display: flex; justify-content: center; align-items: center; gap: 15px;
-  position: relative;
-}
-.pet-face {
-  transition: transform 0.2s; cursor: pointer;
-}
-.pet-face:hover { transform: scale(1.2) rotate(10deg); }
-.combo-text {
-  font-size: 20px; color: #ff6f6f; font-weight: bold; opacity: 0;
-  transform: scale(0.5); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.combo-active { opacity: 1; transform: scale(1); }
-.shake { animation: shake 0.3s; }
-@keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
-
 .categories { margin-bottom: 14px; }
 .categories button {
   margin: 0 6px; padding: 6px 14px; border-radius: 20px; border: none;
@@ -104,8 +87,20 @@ body {
 
 input {
   width: 100%; max-width: 600px; padding: 14px 18px; font-size: 25px; border-radius: 16px;
-  border: none; outline: none; text-align: center; background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
-  box-sizing: border-box;
+  border: 2px solid transparent;
+  outline: none; text-align: center; background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
+  box-sizing: border-box; transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+@keyframes rainbowGlow {
+  0% { box-shadow: 0 0 15px #ff6f6f; border-color: #ff6f6f; }
+  25% { box-shadow: 0 0 15px #ffffba; border-color: #ffffba; }
+  50% { box-shadow: 0 0 15px #baffc9; border-color: #baffc9; }
+  75% { box-shadow: 0 0 15px #bae1ff; border-color: #bae1ff; }
+  100% { box-shadow: 0 0 15px #e180c4; border-color: #e180c4; }
+}
+.fever-mode {
+  animation: rainbowGlow 1.5s linear infinite alternate;
 }
 
 .navigation-hints { margin-top: 25px; }
@@ -163,11 +158,6 @@ input {
     <button data-type="movie">영화</button>
     <button data-type="drama">드라마</button>
   </div>
-  
-  <div class="pet-container">
-    <div id="petFace" class="pet-face">(・_・)</div>
-    <div id="comboText" class="combo-text">0 Combo!</div>
-  </div>
 
   <div class="title">오늘의 문장</div>
   <div id="sentence" class="sentence"></div>
@@ -196,15 +186,7 @@ let timerInterval = null;
 let sessionStart = Date.now(); 
 let completedSentences = 0; 
 let totalSpeedSum = 0; 
-let currentCombo = 0;
-
-const petFaces = {
-  IDLE: "(・_・)",    // 평소
-  TYPING: "( Ò_Ó)",  // 타자 치는 중
-  FAST: "(≧ᗜ≦)",    // 빠름
-  ERROR: "(×_×)",    // 오타
-  SLEEP: "( -_-)zZ"  // 멈춤
-};
+let consecutiveCorrect = 0;
 
 function getCharJasoCount(char) {
   const code = char.charCodeAt(0);
@@ -238,11 +220,11 @@ class Particle {
   draw() { ctx.globalAlpha = this.opacity; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
 }
 
-function createParticles() {
+function createParticles(amount = 6) {
   const inputRect = document.getElementById("input").getBoundingClientRect();
   const x = inputRect.left + Math.random() * inputRect.width;
   const y = inputRect.top + Math.random() * inputRect.height;
-  for (let i = 0; i < 6; i++) { particles.push(new Particle(x, y)); }
+  for (let i = 0; i < amount; i++) { particles.push(new Particle(x, y)); }
 }
 
 function animateParticles() {
@@ -260,7 +242,6 @@ const speedEl = document.getElementById("speed"), accuracyEl = document.getEleme
 const bestScoreEl = document.getElementById("bestScore"), avgScoreEl = document.getElementById("avgScore");
 const resetBtn = document.getElementById("resetBtn");
 const prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElementById("nextBtn");
-const petFaceEl = document.getElementById("petFace"), comboTextEl = document.getElementById("comboText");
 
 bestScoreEl.textContent = personalBest;
 
@@ -339,23 +320,14 @@ function updateRealTimeStats() {
   
   const acc = Math.floor((correctChars / Math.max(lengthToCompare, 1)) * 100) || 100;
   accuracyEl.textContent = acc;
-
-  if (currentSpeed === 0) {
-     if (!petFaceEl.classList.contains("shake")) petFaceEl.textContent = petFaces.SLEEP;
-  } else if (currentSpeed >= 500) {
-     petFaceEl.textContent = petFaces.FAST;
-  } else {
-     petFaceEl.textContent = petFaces.TYPING;
-  }
 }
 
 function newSentence() {
   clearInterval(timerInterval); 
   timerInterval = null;
   
-  currentCombo = 0;
-  updateComboUI();
-  petFaceEl.textContent = petFaces.IDLE;
+  consecutiveCorrect = 0;
+  input.classList.remove("fever-mode");
 
   const list = data[currentType];
   if (list.length <= 1) { updateHistory(list[0]); return; }
@@ -398,15 +370,6 @@ function displaySentence(text) {
   }, 200);
 }
 
-function updateComboUI() {
-  if (currentCombo > 5) {
-    comboTextEl.textContent = currentCombo + " Combo!";
-    comboTextEl.classList.add("combo-active");
-  } else {
-    comboTextEl.classList.remove("combo-active");
-  }
-}
-
 input.addEventListener("input", (e) => {
   const val = input.value;
   const lastIndex = val.length - 1;
@@ -416,9 +379,8 @@ input.addEventListener("input", (e) => {
     speedEl.textContent = "0"; 
     clearInterval(timerInterval);
     timerInterval = null;
-    currentCombo = 0; 
-    updateComboUI();
-    petFaceEl.textContent = petFaces.IDLE;
+    consecutiveCorrect = 0;
+    input.classList.remove("fever-mode");
     return; 
   }
 
@@ -428,16 +390,19 @@ input.addEventListener("input", (e) => {
   }
 
   if (e.inputType !== "deleteContentBackward" && val[lastIndex] === currentSentence[lastIndex]) {
-    currentCombo++;
-    createParticles();
-  } else {
-    currentCombo = 0;
-    petFaceEl.textContent = petFaces.ERROR;
-    petFaceEl.classList.add("shake");
-    setTimeout(() => petFaceEl.classList.remove("shake"), 300);
-  }
-  updateComboUI();
+    consecutiveCorrect++;
+    
+    if (consecutiveCorrect >= 20) {
+      input.classList.add("fever-mode");
+    }
 
+     const particleCount = input.classList.contains("fever-mode") ? 12 : 6;
+    createParticles(particleCount);
+
+  } else {
+    consecutiveCorrect = 0;
+    input.classList.remove("fever-mode");
+  }
 
   if (input.value.length >= currentSentence.length && !endTime) {
     endTime = Date.now();
