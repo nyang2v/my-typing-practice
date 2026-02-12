@@ -87,7 +87,7 @@ body {
 
 input {
   width: 100%; max-width: 600px; padding: 14px 18px; font-size: 25px; border-radius: 16px;
-  border: 2px solid transparent;
+  border: 2px solid transparent; 
   outline: none; text-align: center; background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
   box-sizing: border-box; transition: box-shadow 0.3s, border-color 0.3s;
 }
@@ -186,7 +186,7 @@ let timerInterval = null;
 let sessionStart = Date.now(); 
 let completedSentences = 0; 
 let totalSpeedSum = 0; 
-let consecutiveCorrect = 0;
+let consecutiveCorrect = 0; 
 
 function getCharJasoCount(char) {
   const code = char.charCodeAt(0);
@@ -220,7 +220,7 @@ class Particle {
   draw() { ctx.globalAlpha = this.opacity; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
 }
 
-function createParticles(amount = 6) {
+function createParticles(amount = 6) { 
   const inputRect = document.getElementById("input").getBoundingClientRect();
   const x = inputRect.left + Math.random() * inputRect.width;
   const y = inputRect.top + Math.random() * inputRect.height;
@@ -392,11 +392,11 @@ input.addEventListener("input", (e) => {
   if (e.inputType !== "deleteContentBackward" && val[lastIndex] === currentSentence[lastIndex]) {
     consecutiveCorrect++;
     
-    if (consecutiveCorrect >= 20) {
+      if (consecutiveCorrect >= 10) {
       input.classList.add("fever-mode");
     }
 
-     const particleCount = input.classList.contains("fever-mode") ? 12 : 6;
+    const particleCount = input.classList.contains("fever-mode") ? 12 : 6;
     createParticles(particleCount);
 
   } else {
