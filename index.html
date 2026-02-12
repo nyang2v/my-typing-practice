@@ -12,44 +12,19 @@ body {
 #particleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
 .best-record {
-  position: absolute;
-  top: 35px;
-  right: 45px;
-  text-align: right;
-  color: #ae97c1;
-  font-size: 15px;
-  letter-spacing: 1px;
-  z-index: 30;
+  position: absolute; top: 35px; right: 45px; text-align: right;
+  color: #ae97c1; font-size: 15px; letter-spacing: 1px; z-index: 30;
 }
-
 .best-record span {
-  font-size: 26px;
-  display: block;
-  color: #e180c4;
-  margin-top: 5px;
-  font-weight: bold;
-  transition: transform 0.2s ease;
+  font-size: 26px; display: block; color: #e180c4; margin-top: 5px;
+  font-weight: bold; transition: transform 0.2s ease;
 }
-
 .reset-btn {
-  background: transparent;
-  border: 1px solid #ae97c1;
-  border-radius: 10px;
-  color: #ae97c1;
-  font-family: 'Gowun Batang', serif;
-  font-size: 11px;
-  padding: 3px 8px;
-  cursor: pointer;
-  margin-top: 8px;
-  opacity: 0.6;
-  transition: 0.2s;
+  background: transparent; border: 1px solid #ae97c1; border-radius: 10px;
+  color: #ae97c1; font-family: 'Gowun Batang', serif; font-size: 11px;
+  padding: 3px 8px; cursor: pointer; margin-top: 8px; opacity: 0.6; transition: 0.2s;
 }
-
-.reset-btn:hover {
-  opacity: 1;
-  background: #ae97c1;
-  color: white;
-}
+.reset-btn:hover { opacity: 1; background: #ae97c1; color: white; }
 
 .container { text-align: center; width: 700px; position: relative; z-index: 20; }
 .categories { margin-bottom: 14px; }
@@ -88,7 +63,7 @@ input {
 <canvas id="particleCanvas"></canvas>
 
 <div class="best-record">
-  나의 최고 타수
+  나의 최고 기록
   <span id="bestScore">0</span>
   <button id="resetBtn" class="reset-btn">초기화</button>
 </div>
@@ -120,6 +95,7 @@ input {
 let currentType = "anime", currentSentence = "", startTime = null, endTime = null;
 let history = [], historyIndex = -1;
 let personalBest = parseInt(localStorage.getItem("dailyTypingBest")) || 0;
+let timerInterval = null;
 
 function getCharJasoCount(char) {
   const code = char.charCodeAt(0);
@@ -196,6 +172,9 @@ function getSpeedColor(speed) {
 }
 
 function newSentence() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+
   const list = data[currentType];
   if (list.length <= 1) { updateHistory(list[0]); return; }
   let picked;
@@ -214,8 +193,10 @@ function displaySentence(text) {
   setTimeout(() => {
     currentSentence = text; sentenceEl.innerHTML = ""; input.value = ""; 
     startTime = null; endTime = null;
+    
     speedEl.textContent = "0"; speedEl.style.color = getSpeedColor(0); accuracyEl.textContent = "100";
     speedEl.classList.remove("sparkle");
+    
     [...currentSentence].forEach(char => {
       const span = document.createElement("span"); span.textContent = char; sentenceEl.appendChild(span);
     });
@@ -224,21 +205,12 @@ function displaySentence(text) {
   }, 200);
 }
 
-input.addEventListener("input", () => {
-  if (!input.value) { startTime = null; endTime = null; speedEl.textContent = "0"; return; }
-  if (!startTime) startTime = Date.now();
-
-  createParticles();
-
-  if (input.value.length >= currentSentence.length && !endTime) {
-    endTime = Date.now();
-  } else if (input.value.length < currentSentence.length) {
-    endTime = null; 
-  }
+function updateStats() {
+  if (!startTime) return;
 
   const now = endTime || Date.now();
   const elapsedMinutes = Math.max((now - startTime) / 60000, 0.0001);
-  
+
   let correctStrokes = 0;
   let correctChars = 0;
   const lengthToCompare = Math.min(input.value.length, currentSentence.length);
@@ -263,8 +235,40 @@ input.addEventListener("input", () => {
     else span.className = "incorrect";
   });
   
-  const acc = Math.floor((correctChars / lengthToCompare) * 100) || 0;
+  const acc = Math.floor((correctChars / Math.max(lengthToCompare, 1)) * 100) || 100;
   accuracyEl.textContent = acc;
+}
+
+input.addEventListener("input", () => {
+  if (!input.value) { 
+    // 다 지우면 초기화
+    startTime = null; endTime = null; 
+    speedEl.textContent = "0"; 
+    if (timerInterval) clearInterval(timerInterval);
+    return; 
+  }
+
+  // 처음 타이핑 시작할 때 타이머 가동!
+  if (!startTime) {
+    startTime = Date.now();
+    // 0.1초마다 점수 갱신 (멈춰있으면 점수 떨어짐)
+    timerInterval = setInterval(updateStats, 100);
+  }
+
+  createParticles();
+
+  // 문장 완료 시
+  if (input.value.length >= currentSentence.length && !endTime) {
+    endTime = Date.now();
+    clearInterval(timerInterval); // 완료되면 타이머 멈춤 (점수 고정)
+    updateStats(); // 마지막으로 한 번 더 계산
+  } else if (input.value.length < currentSentence.length) {
+      endTime = null;
+
+    if (!timerInterval) timerInterval = setInterval(updateStats, 100);
+  }
+
+  updateStats();
 });
 
 input.addEventListener("keydown", e => {
