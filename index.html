@@ -63,7 +63,7 @@ input {
 <canvas id="particleCanvas"></canvas>
 
 <div class="best-record">
-  나의 최고 기록
+  나의 최고 타수
   <span id="bestScore">0</span>
   <button id="resetBtn" class="reset-btn">초기화</button>
 </div>
@@ -107,7 +107,6 @@ function getCharJasoCount(char) {
   return 1; 
 }
 
-// 입자 설정
 const canvas = document.getElementById("particleCanvas");
 const ctx = canvas.getContext("2d");
 let particles = [];
@@ -171,8 +170,42 @@ function getSpeedColor(speed) {
   return "#d4af37";
 }
 
+function updateRealTimeStats() {
+  if (!startTime) return;
+
+  const now = endTime || Date.now();
+  const elapsedMinutes = Math.max((now - startTime) / 60000, 0.0001);
+
+  let correctStrokes = 0;
+  let correctChars = 0;
+  const lengthToCompare = Math.min(input.value.length, currentSentence.length);
+
+  for (let i = 0; i < lengthToCompare; i++) {
+    if (input.value[i] === currentSentence[i]) {
+      correctStrokes += getCharJasoCount(input.value[i]);
+      correctChars++;
+    }
+  }
+
+   const currentSpeed = Math.floor(correctStrokes / elapsedMinutes);
+  
+  speedEl.textContent = currentSpeed;
+  speedEl.style.color = getSpeedColor(currentSpeed);
+  if (currentSpeed >= 500) speedEl.classList.add("sparkle"); else speedEl.classList.remove("sparkle");
+
+  const spans = sentenceEl.querySelectorAll("span");
+  spans.forEach((span, i) => {
+    if (!input.value[i]) span.className = "";
+    else if (input.value[i] === span.textContent) { span.className = "correct"; }
+    else span.className = "incorrect";
+  });
+  
+  const acc = Math.floor((correctChars / Math.max(lengthToCompare, 1)) * 100) || 100;
+  accuracyEl.textContent = acc;
+}
+
 function newSentence() {
-  if (timerInterval) clearInterval(timerInterval);
+  clearInterval(timerInterval);
   timerInterval = null;
 
   const list = data[currentType];
@@ -205,70 +238,32 @@ function displaySentence(text) {
   }, 200);
 }
 
-function updateStats() {
-  if (!startTime) return;
-
-  const now = endTime || Date.now();
-  const elapsedMinutes = Math.max((now - startTime) / 60000, 0.0001);
-
-  let correctStrokes = 0;
-  let correctChars = 0;
-  const lengthToCompare = Math.min(input.value.length, currentSentence.length);
-
-  for (let i = 0; i < lengthToCompare; i++) {
-    if (input.value[i] === currentSentence[i]) {
-      correctStrokes += getCharJasoCount(input.value[i]);
-      correctChars++;
-    }
-  }
-
-  const currentSpeed = Math.floor(correctStrokes / elapsedMinutes);
-  
-  speedEl.textContent = currentSpeed;
-  speedEl.style.color = getSpeedColor(currentSpeed);
-  if (currentSpeed >= 500) speedEl.classList.add("sparkle"); else speedEl.classList.remove("sparkle");
-
-  const spans = sentenceEl.querySelectorAll("span");
-  spans.forEach((span, i) => {
-    if (!input.value[i]) span.className = "";
-    else if (input.value[i] === span.textContent) { span.className = "correct"; }
-    else span.className = "incorrect";
-  });
-  
-  const acc = Math.floor((correctChars / Math.max(lengthToCompare, 1)) * 100) || 100;
-  accuracyEl.textContent = acc;
-}
-
 input.addEventListener("input", () => {
   if (!input.value) { 
-    // 다 지우면 초기화
     startTime = null; endTime = null; 
     speedEl.textContent = "0"; 
-    if (timerInterval) clearInterval(timerInterval);
+    clearInterval(timerInterval);
+    timerInterval = null;
     return; 
   }
 
-  // 처음 타이핑 시작할 때 타이머 가동!
   if (!startTime) {
     startTime = Date.now();
-    // 0.1초마다 점수 갱신 (멈춰있으면 점수 떨어짐)
-    timerInterval = setInterval(updateStats, 100);
+    timerInterval = setInterval(updateRealTimeStats, 50); 
   }
 
   createParticles();
 
-  // 문장 완료 시
   if (input.value.length >= currentSentence.length && !endTime) {
     endTime = Date.now();
-    clearInterval(timerInterval); // 완료되면 타이머 멈춤 (점수 고정)
-    updateStats(); // 마지막으로 한 번 더 계산
+    clearInterval(timerInterval);
+    updateRealTimeStats();
   } else if (input.value.length < currentSentence.length) {
-      endTime = null;
-
-    if (!timerInterval) timerInterval = setInterval(updateStats, 100);
+    endTime = null;
+      if (!timerInterval && startTime) {
+      timerInterval = setInterval(updateRealTimeStats, 50);
+    }
   }
-
-  updateStats();
 });
 
 input.addEventListener("keydown", e => {
