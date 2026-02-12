@@ -15,23 +15,15 @@ body {
   position: absolute; top: 35px; right: 45px; text-align: right;
   color: #ae97c1; font-size: 15px; letter-spacing: 1px; z-index: 30;
 }
-.record-item {
-  margin-bottom: 8px; /* 항목 사이 간격 */
-}
-.record-label {
-  font-size: 14px; opacity: 0.8;
-}
-.record-value {
-  font-size: 24px; color: #e180c4; font-weight: bold;
-  display: inline-block; margin-left: 5px;
-  transition: transform 0.2s ease;
-}
+.record-item { margin-bottom: 8px; }
+.record-label { font-size: 14px; opacity: 0.8; }
+.record-value { font-size: 24px; color: #e180c4; font-weight: bold; display: inline-block; margin-left: 5px; transition: transform 0.2s ease; }
+#avgScore { color: #7d98d1; }
 
 .reset-btn {
   background: rgba(255, 255, 255, 0.5); border: 1px solid #923e59; border-radius: 10px;
   color: #923e59; font-family: 'Gowun Batang', serif; font-size: 12px; font-weight: bold;
-  padding: 4px 10px; cursor: pointer; margin-top: 5px; transition: 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 4px 10px; cursor: pointer; margin-top: 5px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .reset-btn:hover { background: #923e59; color: white; }
 
@@ -63,8 +55,7 @@ body {
 @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 .goodbye-screen {
-  display: none;
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: #fdebeb; z-index: 200;
   flex-direction: column; justify-content: center; align-items: center;
   text-align: center; animation: fadeIn 1s ease;
@@ -74,14 +65,26 @@ body {
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .container { 
-  text-align: center; 
-  width: 90%; 
-  max-width: 900px;
-  position: relative; 
-  z-index: 20;
-  padding: 0 20px; 
-  box-sizing: border-box; 
+  text-align: center; width: 90%; max-width: 900px;
+  position: relative; z-index: 20; padding: 0 20px; box-sizing: border-box; 
 }
+
+.pet-container {
+  font-size: 40px; margin-bottom: 10px; height: 50px;
+  display: flex; justify-content: center; align-items: center; gap: 15px;
+  position: relative;
+}
+.pet-face {
+  transition: transform 0.2s; cursor: pointer;
+}
+.pet-face:hover { transform: scale(1.2) rotate(10deg); }
+.combo-text {
+  font-size: 20px; color: #ff6f6f; font-weight: bold; opacity: 0;
+  transform: scale(0.5); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.combo-active { opacity: 1; transform: scale(1); }
+.shake { animation: shake 0.3s; }
+@keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
 
 .categories { margin-bottom: 14px; }
 .categories button {
@@ -92,25 +95,15 @@ body {
 .title { font-size: 22px; color: #ae97c1; margin-bottom: 22px; letter-spacing: 2px; }
 
 .sentence { 
-  font-size: 26px; 
-  margin-bottom: 26px; 
-  color: #e180c4; 
-  transition: opacity 0.4s ease; 
-  min-height: 40px;
-  white-space: normal !important;
-  word-break: keep-all;
-  word-wrap: break-word;
-  line-height: 1.6;
-  width: 100%;
+  font-size: 26px; margin-bottom: 26px; color: #e180c4; transition: opacity 0.4s ease; min-height: 40px;
+  white-space: normal !important; word-break: keep-all; word-wrap: break-word; line-height: 1.6; width: 100%;
 }
 .fade-out { opacity: 0; }
 .correct { color: #869bc9; }
 .incorrect { color: #ea7594; }
 
 input {
-  width: 100%; 
-  max-width: 600px; 
-  padding: 14px 18px; font-size: 25px; border-radius: 16px;
+  width: 100%; max-width: 600px; padding: 14px 18px; font-size: 25px; border-radius: 16px;
   border: none; outline: none; text-align: center; background: #ecbecd; color: #923e59; font-family: 'Gowun Batang', serif;
   box-sizing: border-box;
 }
@@ -170,6 +163,12 @@ input {
     <button data-type="movie">영화</button>
     <button data-type="drama">드라마</button>
   </div>
+  
+  <div class="pet-container">
+    <div id="petFace" class="pet-face">(・_・)</div>
+    <div id="comboText" class="combo-text">0 Combo!</div>
+  </div>
+
   <div class="title">오늘의 문장</div>
   <div id="sentence" class="sentence"></div>
   <input id="input" placeholder="여기에 그대로 쳐보세요" autocomplete="off">
@@ -196,8 +195,16 @@ let personalBest = parseInt(localStorage.getItem("dailyTypingBest")) || 0;
 let timerInterval = null; 
 let sessionStart = Date.now(); 
 let completedSentences = 0; 
-
 let totalSpeedSum = 0; 
+let currentCombo = 0;
+
+const petFaces = {
+  IDLE: "(・_・)",    // 평소
+  TYPING: "( Ò_Ó)",  // 타자 치는 중
+  FAST: "(≧ᗜ≦)",    // 빠름
+  ERROR: "(×_×)",    // 오타
+  SLEEP: "( -_-)zZ"  // 멈춤
+};
 
 function getCharJasoCount(char) {
   const code = char.charCodeAt(0);
@@ -250,9 +257,10 @@ animateParticles();
 
 const sentenceEl = document.getElementById("sentence"), input = document.getElementById("input");
 const speedEl = document.getElementById("speed"), accuracyEl = document.getElementById("accuracy");
-const bestScoreEl = document.getElementById("bestScore"), avgScoreEl = document.getElementById("avgScore"); // 평균 점수 요소 추가
+const bestScoreEl = document.getElementById("bestScore"), avgScoreEl = document.getElementById("avgScore");
 const resetBtn = document.getElementById("resetBtn");
 const prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElementById("nextBtn");
+const petFaceEl = document.getElementById("petFace"), comboTextEl = document.getElementById("comboText");
 
 bestScoreEl.textContent = personalBest;
 
@@ -269,7 +277,6 @@ function showResult() {
   const totalMinutes = Math.floor((now - sessionStart) / 60000);
   const totalSeconds = Math.floor(((now - sessionStart) % 60000) / 1000);
   
-  // 최종 평균 타수 계산
   const finalAvg = completedSentences > 0 ? Math.floor(totalSpeedSum / completedSentences) : 0;
 
   let timeStr = "";
@@ -332,11 +339,23 @@ function updateRealTimeStats() {
   
   const acc = Math.floor((correctChars / Math.max(lengthToCompare, 1)) * 100) || 100;
   accuracyEl.textContent = acc;
+
+  if (currentSpeed === 0) {
+     if (!petFaceEl.classList.contains("shake")) petFaceEl.textContent = petFaces.SLEEP;
+  } else if (currentSpeed >= 500) {
+     petFaceEl.textContent = petFaces.FAST;
+  } else {
+     petFaceEl.textContent = petFaces.TYPING;
+  }
 }
 
 function newSentence() {
   clearInterval(timerInterval); 
   timerInterval = null;
+  
+  currentCombo = 0;
+  updateComboUI();
+  petFaceEl.textContent = petFaces.IDLE;
 
   const list = data[currentType];
   if (list.length <= 1) { updateHistory(list[0]); return; }
@@ -379,12 +398,27 @@ function displaySentence(text) {
   }, 200);
 }
 
-input.addEventListener("input", () => {
-  if (!input.value) { 
+function updateComboUI() {
+  if (currentCombo > 5) {
+    comboTextEl.textContent = currentCombo + " Combo!";
+    comboTextEl.classList.add("combo-active");
+  } else {
+    comboTextEl.classList.remove("combo-active");
+  }
+}
+
+input.addEventListener("input", (e) => {
+  const val = input.value;
+  const lastIndex = val.length - 1;
+
+  if (!val) { 
     startTime = null; endTime = null; 
     speedEl.textContent = "0"; 
     clearInterval(timerInterval);
     timerInterval = null;
+    currentCombo = 0; 
+    updateComboUI();
+    petFaceEl.textContent = petFaces.IDLE;
     return; 
   }
 
@@ -393,7 +427,17 @@ input.addEventListener("input", () => {
     timerInterval = setInterval(updateRealTimeStats, 50); 
   }
 
-  createParticles();
+  if (e.inputType !== "deleteContentBackward" && val[lastIndex] === currentSentence[lastIndex]) {
+    currentCombo++;
+    createParticles();
+  } else {
+    currentCombo = 0;
+    petFaceEl.textContent = petFaces.ERROR;
+    petFaceEl.classList.add("shake");
+    setTimeout(() => petFaceEl.classList.remove("shake"), 300);
+  }
+  updateComboUI();
+
 
   if (input.value.length >= currentSentence.length && !endTime) {
     endTime = Date.now();
@@ -427,7 +471,7 @@ input.addEventListener("keydown", e => {
         completedSentences++;
         totalSpeedSum += finalSpeed;
         const currentAvg = Math.floor(totalSpeedSum / completedSentences);
-        document.getElementById("avgScore").textContent = currentAvg;
+        avgScoreEl.textContent = currentAvg;
       }
       
       newSentence();
