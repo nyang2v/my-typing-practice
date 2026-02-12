@@ -21,24 +21,40 @@ body {
 }
 
 .reset-btn {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid #923e59;
-  border-radius: 10px;
-  color: #923e59;
-  font-family: 'Gowun Batang', serif;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 4px 10px;
-  cursor: pointer;
-  margin-top: 8px;
-  transition: 0.2s;
+  background: rgba(255, 255, 255, 0.5); border: 1px solid #923e59; border-radius: 10px;
+  color: #923e59; font-family: 'Gowun Batang', serif; font-size: 12px; font-weight: bold;
+  padding: 4px 10px; cursor: pointer; margin-top: 8px; transition: 0.2s;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+.reset-btn:hover { background: #923e59; color: white; }
 
-.reset-btn:hover {
-  background: #923e59;
-  color: white;
+.finish-btn {
+  position: absolute; bottom: 30px; right: 40px;
+  background: #ae97c1; color: white; border: none; border-radius: 20px;
+  padding: 10px 20px; font-family: 'Gowun Batang', serif; font-size: 16px;
+  cursor: pointer; z-index: 40; box-shadow: 0 4px 10px rgba(174, 151, 193, 0.4);
+  transition: transform 0.2s;
 }
+.finish-btn:hover { transform: scale(1.05); background: #923e59; }
+
+.modal-overlay {
+  display: none;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5); z-index: 100;
+  justify-content: center; align-items: center;
+}
+.modal-content {
+  background: white; padding: 40px; border-radius: 20px; text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 400px;
+  animation: popUp 0.3s ease-out;
+}
+.modal-title { font-size: 24px; color: #ae97c1; margin-bottom: 20px; font-weight: bold; }
+.modal-text { font-size: 18px; color: #555; line-height: 1.6; margin-bottom: 30px; }
+.modal-close-btn {
+  background: #e180c4; color: white; border: none; padding: 10px 25px;
+  border-radius: 15px; font-family: 'Gowun Batang', serif; font-size: 16px; cursor: pointer;
+}
+@keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 .container { text-align: center; width: 700px; position: relative; z-index: 20; }
 .categories { margin-bottom: 14px; }
@@ -76,6 +92,18 @@ input {
 
 <canvas id="particleCanvas"></canvas>
 
+<div id="resultModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-title">수고하셨어요!💖</div>
+    <div class="modal-text" id="resultText">
+      오늘의 타자 연습은<br>
+      0분 동안, 0개 문장을 타이핑했어요!^o^<br>
+      내일 또 만나요!>_<
+    </div>
+    <button class="modal-close-btn" onclick="closeModal()">안녕!</button>
+  </div>
+</div>
+
 <div class="best-record">
   나의 최고 타수
   <span id="bestScore">0</span>
@@ -90,7 +118,7 @@ input {
   </div>
   <div class="title">오늘의 문장</div>
   <div id="sentence" class="sentence"></div>
-  <input id="input" placeholder="여기에 그대로 쳐보세요^o^" autocomplete="off">
+  <input id="input" placeholder="여기에 그대로 쳐보세요" autocomplete="off">
   <div class="navigation-hints">
     <div class="nav-buttons">
       <button id="prevBtn">이전 문장</button>
@@ -104,12 +132,17 @@ input {
   </div>
 </div>
 
+<button class="finish-btn" onclick="showResult()">그만하기</button>
+
 <script src="data.js"></script> 
 <script>
 let currentType = "anime", currentSentence = "", startTime = null, endTime = null;
 let history = [], historyIndex = -1;
 let personalBest = parseInt(localStorage.getItem("dailyTypingBest")) || 0;
 let timerInterval = null; 
+
+let sessionStart = Date.now();
+let completedSentences = 0;
 
 function getCharJasoCount(char) {
   const code = char.charCodeAt(0);
@@ -174,6 +207,27 @@ resetBtn.addEventListener("click", () => {
     bestScoreEl.textContent = 0;
   }
 });
+
+function showResult() {
+  const now = Date.now();
+  const totalMinutes = Math.floor((now - sessionStart) / 60000);
+  const totalSeconds = Math.floor(((now - sessionStart) % 60000) / 1000);
+  
+  let timeStr = "";
+  if (totalMinutes > 0) timeStr += `${totalMinutes}분 `;
+  timeStr += `${totalSeconds}초`;
+
+  const textEl = document.getElementById("resultText");
+  textEl.innerHTML = `오늘의 타자 연습은<br>
+  <strong>${timeStr}</strong> 동안, <strong>${completedSentences}개</strong> 문장을 연습했어요!^o^<br>
+  내일 또 만나요!`;
+
+  document.getElementById("resultModal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("resultModal").style.display = "none";
+}
 
 function getSpeedColor(speed) {
   if (speed < 100) return "#869bc9"; if (speed < 200) return "#8fbc93";
@@ -295,6 +349,11 @@ input.addEventListener("keydown", e => {
         bestScoreEl.style.transform = "scale(1.3)";
         setTimeout(() => bestScoreEl.style.transform = "scale(1)", 200);
       }
+      
+      if (isPerfect) {
+        completedSentences++;
+      }
+      
       newSentence();
     }
   }
